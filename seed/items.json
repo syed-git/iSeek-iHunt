@@ -1,0 +1,514 @@
+[
+  {
+    "slug": "red-honda-civic",
+    "category": "Cars",
+    "title": "Red Honda Civic hatchback",
+    "description": "Red Honda Civic hatchback with black alloy wheels and sporty front grille. Recovered after a theft report; number plate removed.",
+    "station": 1,
+    "found_location": "Abandoned near Metro Mall parking, Level B2",
+    "days_ago": 2,
+    "time": "07:40",
+    "photos": [
+      "red-honda-civic-1.jpg",
+      "red-honda-civic-2.jpg"
+    ]
+  },
+  {
+    "slug": "white-chevy-suburban",
+    "category": "Cars",
+    "title": "White Chevrolet Suburban SUV",
+    "description": "Full-size white Chevrolet SUV with chrome grille and tinted windows. Found parked illegally for 5 days.",
+    "station": 2,
+    "found_location": "Northside Industrial Road",
+    "days_ago": 4,
+    "time": "10:15",
+    "photos": [
+      "white-chevy-suburban-1.jpg",
+      "white-chevy-suburban-2.jpg"
+    ]
+  },
+  {
+    "slug": "white-fiat-500x",
+    "category": "Cars",
+    "title": "White Fiat 500X crossover",
+    "description": "Compact white/silver Fiat crossover with roof rails. Keys were left inside.",
+    "station": 4,
+    "found_location": "Westfield shopping street",
+    "days_ago": 1,
+    "time": "18:20",
+    "photos": [
+      "white-fiat-500x-1.jpg",
+      "white-fiat-500x-2.jpg"
+    ]
+  },
+  {
+    "slug": "red-cruiser-motorcycle",
+    "category": "Bikes & Scooters",
+    "title": "Red cruiser motorcycle",
+    "description": "Red and black touring cruiser motorbike with chrome engine and leather seat.",
+    "station": 5,
+    "found_location": "Riverside Main Street, outside bakery",
+    "days_ago": 3,
+    "time": "06:55",
+    "photos": [
+      "red-cruiser-motorcycle-1.jpg",
+      "red-cruiser-motorcycle-2.jpg"
+    ]
+  },
+  {
+    "slug": "black-harley-motorcycle",
+    "category": "Bikes & Scooters",
+    "title": "Black Harley-style motorcycle",
+    "description": "Black heavy cruiser motorcycle with wide rear tyre and red tank accents.",
+    "station": 3,
+    "found_location": "Harbor Point parking lot",
+    "days_ago": 6,
+    "time": "21:10",
+    "photos": [
+      "black-harley-motorcycle-1.jpg"
+    ]
+  },
+  {
+    "slug": "black-scooter",
+    "category": "Bikes & Scooters",
+    "title": "Black scooter",
+    "description": "Black moped scooter with round headlight, parked against a graffiti wall.",
+    "station": 4,
+    "found_location": "Westfield Lane 7",
+    "days_ago": 2,
+    "time": "13:30",
+    "photos": [
+      "black-scooter-1.jpg"
+    ]
+  },
+  {
+    "slug": "grey-vespa",
+    "category": "Bikes & Scooters",
+    "title": "Grey vintage-style scooter",
+    "description": "Matte grey Vespa-style scooter with chrome mirrors.",
+    "station": 1,
+    "found_location": "Central Square",
+    "days_ago": 5,
+    "time": "09:05",
+    "photos": [
+      "grey-vespa-1.jpg"
+    ]
+  },
+  {
+    "slug": "green-iphone",
+    "category": "Mobile Phones",
+    "title": "Green iPhone 13 Pro",
+    "description": "Alpine green iPhone with triple camera, no case. Screen locked.",
+    "station": 6,
+    "found_location": "Terminal 2, Gate 14 seating area",
+    "days_ago": 0,
+    "time": "08:10",
+    "photos": [
+      "green-iphone-1.jpg"
+    ]
+  },
+  {
+    "slug": "red-iphone-se",
+    "category": "Mobile Phones",
+    "title": "Red iPhone SE",
+    "description": "(PRODUCT)RED iPhone SE, small crack on the back glass.",
+    "station": 1,
+    "found_location": "City bus #21",
+    "days_ago": 1,
+    "time": "17:45",
+    "photos": [
+      "red-iphone-se-1.jpg"
+    ]
+  },
+  {
+    "slug": "white-iphone",
+    "category": "Mobile Phones",
+    "title": "White iPhone with dual camera",
+    "description": "White/starlight iPhone with dual camera, no case.",
+    "station": 7,
+    "found_location": "TechPark One cafeteria, 3rd floor",
+    "days_ago": 0,
+    "time": "12:20",
+    "photos": [
+      "white-iphone-1.jpg"
+    ]
+  },
+  {
+    "slug": "black-iphone-pro",
+    "category": "Mobile Phones",
+    "title": "Graphite iPhone Pro",
+    "description": "Dark graphite iPhone Pro with triple camera.",
+    "station": 8,
+    "found_location": "Platform 4 bench",
+    "days_ago": 2,
+    "time": "19:05",
+    "photos": [
+      "black-iphone-pro-1.jpg"
+    ]
+  },
+  {
+    "slug": "us-passport",
+    "category": "Passports",
+    "title": "Two United States passports",
+    "description": "Two navy blue US passports held together, likely a family.",
+    "station": 6,
+    "found_location": "Security check lane 3",
+    "days_ago": 1,
+    "time": "05:50",
+    "photos": [
+      "us-passport-1.jpg"
+    ]
+  },
+  {
+    "slug": "burgundy-passport",
+    "category": "Passports",
+    "title": "Burgundy EU passport",
+    "description": "Burgundy/red European passport booklet with gold emblem.",
+    "station": 3,
+    "found_location": "Harbor Point ferry terminal",
+    "days_ago": 3,
+    "time": "15:25",
+    "photos": [
+      "burgundy-passport-1.jpg"
+    ]
+  },
+  {
+    "slug": "national-id-card",
+    "category": "ID Cards & Documents",
+    "title": "National identity card",
+    "description": "Laminated national ID card with photo of an elderly man.",
+    "station": 2,
+    "found_location": "Northside Metro station",
+    "days_ago": 2,
+    "time": "08:30",
+    "photos": [
+      "national-id-card-1.jpg"
+    ]
+  },
+  {
+    "slug": "brown-leather-wallet",
+    "category": "Wallets & Purses",
+    "title": "Dark brown leather wallet",
+    "description": "Dark brown bifold leather wallet with metal logo plate. Contains cards, no cash.",
+    "station": 1,
+    "found_location": "Central Park jogging track",
+    "days_ago": 0,
+    "time": "07:05",
+    "photos": [
+      "brown-leather-wallet-1.jpg"
+    ]
+  },
+  {
+    "slug": "tan-leather-wallet",
+    "category": "Wallets & Purses",
+    "title": "Tan stitched leather wallet",
+    "description": "Handmade tan leather bifold wallet with white stitching.",
+    "station": 5,
+    "found_location": "Riverside food court",
+    "days_ago": 4,
+    "time": "20:40",
+    "photos": [
+      "tan-leather-wallet-1.jpg"
+    ]
+  },
+  {
+    "slug": "blue-jansport-backpack",
+    "category": "Bags & Backpacks",
+    "title": "Navy blue JanSport backpack",
+    "description": "Navy blue JanSport school backpack with front pocket, contains notebooks.",
+    "station": 7,
+    "found_location": "TechPark One lobby",
+    "days_ago": 1,
+    "time": "09:40",
+    "photos": [
+      "blue-jansport-backpack-1.jpg"
+    ]
+  },
+  {
+    "slug": "red-champion-backpack",
+    "category": "Bags & Backpacks",
+    "title": "Red & navy Champion backpack",
+    "description": "Small red backpack with navy bottom and Champion logo.",
+    "station": 8,
+    "found_location": "Grand Central waiting hall",
+    "days_ago": 2,
+    "time": "11:15",
+    "photos": [
+      "red-champion-backpack-1.jpg"
+    ]
+  },
+  {
+    "slug": "black-leather-handbag",
+    "category": "Bags & Backpacks",
+    "title": "Black quilted leather handbag",
+    "description": "Black quilted leather shoulder handbag with silver buckles.",
+    "station": 4,
+    "found_location": "Westfield cinema hall",
+    "days_ago": 1,
+    "time": "22:30",
+    "photos": [
+      "black-leather-handbag-1.jpg"
+    ]
+  },
+  {
+    "slug": "brown-messenger-bag",
+    "category": "Bags & Backpacks",
+    "title": "Brown leather messenger bag",
+    "description": "Brown leather briefcase / messenger bag with two front pockets.",
+    "station": 8,
+    "found_location": "Train coach B3",
+    "days_ago": 3,
+    "time": "16:50",
+    "photos": [
+      "brown-messenger-bag-1.jpg"
+    ]
+  },
+  {
+    "slug": "turquoise-suitcase",
+    "category": "Luggage",
+    "title": "Turquoise hard-shell suitcase",
+    "description": "Turquoise hard-shell spinner suitcase, medium size, TSA lock.",
+    "station": 6,
+    "found_location": "Baggage belt 5",
+    "days_ago": 0,
+    "time": "06:30",
+    "photos": [
+      "turquoise-suitcase-1.jpg"
+    ]
+  },
+  {
+    "slug": "gold-macbook-air",
+    "category": "Laptops & Tablets",
+    "title": "Gold MacBook Air",
+    "description": "Gold/rose MacBook Air 13-inch laptop.",
+    "station": 7,
+    "found_location": "Meeting room Orion, 5th floor",
+    "days_ago": 0,
+    "time": "18:10",
+    "photos": [
+      "gold-macbook-air-1.jpg"
+    ]
+  },
+  {
+    "slug": "silver-macbook",
+    "category": "Laptops & Tablets",
+    "title": "Silver MacBook laptop",
+    "description": "Silver aluminium MacBook laptop, stickers removed.",
+    "station": 6,
+    "found_location": "Lounge Level 3",
+    "days_ago": 2,
+    "time": "23:15",
+    "photos": [
+      "silver-macbook-1.jpg"
+    ]
+  },
+  {
+    "slug": "ipad-keyboard",
+    "category": "Laptops & Tablets",
+    "title": "iPad with white keyboard",
+    "description": "Black iPad tablet with white Bluetooth keyboard.",
+    "station": 2,
+    "found_location": "Northside public library",
+    "days_ago": 5,
+    "time": "14:05",
+    "photos": [
+      "ipad-keyboard-1.jpg"
+    ]
+  },
+  {
+    "slug": "pilot-watch",
+    "category": "Watches",
+    "title": "Steel pilot chronograph watch",
+    "description": "Stainless steel pilot chronograph wristwatch with black dial and leather strap.",
+    "station": 1,
+    "found_location": "Central gym locker room",
+    "days_ago": 1,
+    "time": "19:30",
+    "photos": [
+      "pilot-watch-1.jpg"
+    ]
+  },
+  {
+    "slug": "casio-gshock",
+    "category": "Watches",
+    "title": "Black Casio G-Shock watch",
+    "description": "Black Casio G-Shock digital-analog sports watch with red accents.",
+    "station": 5,
+    "found_location": "Riverside football ground",
+    "days_ago": 2,
+    "time": "17:10",
+    "photos": [
+      "casio-gshock-1.jpg"
+    ]
+  },
+  {
+    "slug": "gold-necklace",
+    "category": "Jewelry",
+    "title": "Gold necklace with drops",
+    "description": "Thin gold necklace with small hanging drop charms.",
+    "station": 3,
+    "found_location": "Harbor Point beach promenade",
+    "days_ago": 1,
+    "time": "10:45",
+    "photos": [
+      "gold-necklace-1.jpg"
+    ]
+  },
+  {
+    "slug": "ford-car-key",
+    "category": "Keys",
+    "title": "Ford car key fob",
+    "description": "Ford remote key fob with separate blade key and coin battery.",
+    "station": 4,
+    "found_location": "Westfield petrol pump",
+    "days_ago": 0,
+    "time": "08:55",
+    "photos": [
+      "ford-car-key-1.jpg"
+    ]
+  },
+  {
+    "slug": "house-keys",
+    "category": "Keys",
+    "title": "House keys with house keychain",
+    "description": "Two silver house keys on a ring with a metal house-shaped keychain.",
+    "station": 2,
+    "found_location": "Northside Park bench",
+    "days_ago": 3,
+    "time": "12:40",
+    "photos": [
+      "house-keys-1.jpg"
+    ]
+  },
+  {
+    "slug": "keyring-bunch",
+    "category": "Keys",
+    "title": "Bunch of keys with Swiss knife",
+    "description": "Large keyring with car remote, several keys, red Swiss army knife and a purple lighter.",
+    "station": 8,
+    "found_location": "Ticket counter 2",
+    "days_ago": 1,
+    "time": "07:25",
+    "photos": [
+      "keyring-bunch-1.jpg"
+    ]
+  },
+  {
+    "slug": "nikon-dslr",
+    "category": "Cameras & Electronics",
+    "title": "Nikon DSLR camera body",
+    "description": "Black Nikon professional DSLR camera body, no lens attached.",
+    "station": 6,
+    "found_location": "Arrivals hall, Terminal 1",
+    "days_ago": 1,
+    "time": "14:50",
+    "photos": [
+      "nikon-dslr-1.jpg",
+      "nikon-dslr-2.jpg"
+    ]
+  },
+  {
+    "slug": "canon-dslr",
+    "category": "Cameras & Electronics",
+    "title": "Canon DSLR with zoom lens",
+    "description": "Black Canon EOS DSLR camera with kit zoom lens and neck strap.",
+    "station": 3,
+    "found_location": "Harbor lighthouse viewpoint",
+    "days_ago": 4,
+    "time": "16:05",
+    "photos": [
+      "canon-dslr-1.jpg"
+    ]
+  },
+  {
+    "slug": "blue-sony-headphones",
+    "category": "Headphones & Earbuds",
+    "title": "Blue Sony wireless headphones",
+    "description": "Blue Sony on-ear Bluetooth headphones.",
+    "station": 7,
+    "found_location": "TechPark One shuttle bus",
+    "days_ago": 0,
+    "time": "09:15",
+    "photos": [
+      "blue-sony-headphones-1.jpg"
+    ]
+  },
+  {
+    "slug": "black-bose-headphones",
+    "category": "Headphones & Earbuds",
+    "title": "Black noise-cancelling headphones",
+    "description": "Black over-ear noise-cancelling headphones with cable.",
+    "station": 6,
+    "found_location": "Flight AI-202 seat 23C",
+    "days_ago": 2,
+    "time": "22:00",
+    "photos": [
+      "black-bose-headphones-1.jpg"
+    ]
+  },
+  {
+    "slug": "airpods-pro",
+    "category": "Headphones & Earbuds",
+    "title": "Apple AirPods Pro in case",
+    "description": "White Apple AirPods Pro earbuds in charging case.",
+    "station": 1,
+    "found_location": "Central Metro turnstile",
+    "days_ago": 0,
+    "time": "10:35",
+    "photos": [
+      "airpods-pro-1.jpg"
+    ]
+  },
+  {
+    "slug": "blue-aviator-sunglasses",
+    "category": "Eyewear",
+    "title": "Blue mirrored aviator sunglasses",
+    "description": "Aviator sunglasses with blue mirrored lenses and thin metal frame.",
+    "station": 8,
+    "found_location": "Rooftop cafe, station building",
+    "days_ago": 1,
+    "time": "15:55",
+    "photos": [
+      "blue-aviator-sunglasses-1.jpg"
+    ]
+  },
+  {
+    "slug": "black-umbrella",
+    "category": "Umbrellas",
+    "title": "Black folding umbrella",
+    "description": "Large black umbrella with metal ribs.",
+    "station": 7,
+    "found_location": "Reception, TechPark One",
+    "days_ago": 3,
+    "time": "18:45",
+    "photos": [
+      "black-umbrella-1.jpg"
+    ]
+  },
+  {
+    "slug": "teddy-bear-sweater",
+    "category": "Toys",
+    "title": "Teddy bear in red sweater",
+    "description": "Cream teddy bear wearing a red knitted Christmas sweater. Child's toy.",
+    "station": 6,
+    "found_location": "Kids play zone, Terminal 2",
+    "days_ago": 0,
+    "time": "11:05",
+    "photos": [
+      "teddy-bear-sweater-1.jpg"
+    ]
+  },
+  {
+    "slug": "acoustic-guitar",
+    "category": "Musical Instruments",
+    "title": "Acoustic guitar",
+    "description": "Natural wood dreadnought acoustic guitar with black pickguard, no case.",
+    "station": 8,
+    "found_location": "Platform 1 waiting room",
+    "days_ago": 2,
+    "time": "20:15",
+    "photos": [
+      "acoustic-guitar-1.jpg"
+    ]
+  }
+]
