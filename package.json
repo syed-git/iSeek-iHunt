@@ -1,0 +1,29 @@
+{
+  "name": "iseek-ihunt",
+  "version": "1.0.0",
+  "description": "iHunt (police) + iSeek (citizen) — AI-powered lost & found platform",
+  "main": "server/index.js",
+  "type": "commonjs",
+  "private": true,
+  "engines": {
+    "node": ">=20.10"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "build": "node scripts/prefetch-models.js",
+    "seed:reset": "node scripts/reset-db.js",
+    "test": "node --test --test-timeout=300000 test/*.test.js",
+    "lint": "node scripts/check-syntax.js"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "4.3.0",
+    "bcryptjs": "3.0.3",
+    "better-sqlite3": "13.0.3",
+    "cookie-parser": "1.4.7",
+    "express": "5.2.1",
+    "jsonwebtoken": "9.0.3",
+    "multer": "2.4.0",
+    "sharp": "0.35.4"
+  }
+}
