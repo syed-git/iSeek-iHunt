@@ -283,8 +283,9 @@
       panel.innerHTML = html`<div class="card empty-state fade-in"><div class="big">🗓️</div><h3>No pickups scheduled today</h3><p class="muted" style="margin-top:6px">Approved collection appointments for ${fmtDate(localDate())} will appear here.</p></div>`;
       return;
     }
-    const done = appointments.filter((a) => a.status !== 'approved').length;
-    panel.innerHTML = html`<div class="row wrap fade-in" style="margin-bottom:14px"><h3>${fmtDate(localDate())}</h3><span class="chip">${appointments.length} appointment${appointments.length > 1 ? 's' : ''}</span><span class="chip ok">${done} completed</span></div>
+    const done = appointments.filter((a) => a.status === 'completed').length;
+    const noShows = appointments.filter((a) => a.status === 'no_show').length;
+    panel.innerHTML = html`<div class="row wrap fade-in" style="margin-bottom:14px"><h3>${fmtDate(localDate())}</h3><span class="chip">${appointments.length} appointment${appointments.length > 1 ? 's' : ''}</span><span class="chip ok">${done} collected</span>${raw(noShows ? html`<span class="chip bad">${noShows} no-show</span>` : '')}</div>
       <div id="list"></div>`;
     const list = panel.querySelector('#list');
     let nextMarked = false;
