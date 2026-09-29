@@ -35,8 +35,32 @@ function appointmentRows(where, params) {
     .map((a) => ({ ...a, item_photo: a.item_photo ? `/uploads/${a.item_photo}` : null }));
 }
 
-function notify(userId, type, title, body, itemId = null) {
-  db.prepare('INSERT INTO notifications (user_id, type, title, body, item_id) VALUES (?,?,?,?,?)').run(userId, type, title, body, itemId);
+function notify(userId, type, title, body, itemId = null, personId = null) {
+  db.prepare('INSERT INTO notifications (user_id, type, title, body, item_id, person_id) VALUES (?,?,?,?,?,?)').run(userId, type, title, body, itemId, personId);
 }
 
-module.exports = { asyncH, stations, categories, appointmentRows, notify, DATETIME_RE, DATE_RE };
+function slotsFor(stationId, date) {
+  const st = db.prepare('SELECT open_time, close_time FROM stations WHERE id = ?').get(stationId);
+  if (!st) return [];
+  const toMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+  const open = Math.max(toMin(st.open_time), 8 * 60);
+  const close = Math.min(toMin(st.close_time), 21 * 60);
+  const taken = db
+    .prepare(
+      `SELECT t, SUM(n) n FROM (
+         SELECT substr(scheduled_at,12,5) t, COUNT(*) n FROM appointments WHERE station_id = ? AND substr(scheduled_at,1,10) = ? AND status IN ('pending','approved') GROUP BY t
+         UNION ALL
+         SELECT substr(scheduled_at,12,5) t, COUNT(*) n FROM reunions WHERE station_id = ? AND substr(scheduled_at,1,10) = ? AND status IN ('pending','approved') GROUP BY t
+       ) GROUP BY t`
+    )
+    .all(stationId, date, stationId, date);
+  const load = Object.fromEntries(taken.map((t) => [t.t, t.n]));
+  const out = [];
+  for (let m = open; m + 30 <= close; m += 30) {
+    const t = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+    out.push({ time: t, available: (load[t] || 0) < 3 });
+  }
+  return out;
+}
+
+module.exports = { asyncH, stations, categories, appointmentRows, notify, slotsFor, DATETIME_RE, DATE_RE };

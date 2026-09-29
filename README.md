@@ -7,6 +7,8 @@ One Node.js project with two connected web apps:
 | **iHunt** | `/ihunt` | Police stations, airport / railway lost-property offices, corporate security desks | Log found items (station, category, up to 5 photos, date & time found), AI auto-tagging, today's pickup appointments, approve / reject pending claims, inventory |
 | **iSeek** | `/iseek` | Citizens | Find an item by uploading up to 5 photos or by describing it, see where it is held (station address, phone, email, hours, map), book a pickup, get notified when an unmatched item is later handed in |
 
+Both apps also have a **missing / found persons** module: officers register found or unidentified people (iHunt → *People*), families search by photo or description (iSeek → *Find a person*), and the face AI draws the detected face box and 68 facial landmarks (jawline, eyebrows, eyes, nose, mouth) on every photo.
+
 The landing page at `/` links to both.
 
 ## How the AI works
@@ -20,6 +22,14 @@ Everything runs **inside the Node process** — no API key or external AI servic
 - **Watchlist**: if nothing matches, iSeek shows *"Your item has not been found yet. We will let you know when the item is found by sending a notification."*, stores the photos/description and their embeddings, and every new item logged in iHunt is compared against all open reports. Matching users get an in-app notification with a link to the item.
 - **Officer assistant**: in iHunt, adding photos triggers an AI suggestion of category, title, colours and description.
 - The search UI shows the agent's reasoning trace (what it saw, which categories/colours it detected, how many items it compared).
+
+### Face AI (missing persons)
+
+- [`@vladmandic/face-api`](https://github.com/vladmandic/face-api) on TensorFlow.js with the **WASM** backend — pure JavaScript/WASM, no native build, no API key. Models ship inside the npm package.
+- For each photo: SSD MobileNet face detection → 68-point landmarks → 128-d face descriptor, plus age / gender / expression *estimates* and derived geometry (face shape, eye spacing, symmetry, head pose).
+- Matching uses the Euclidean distance between descriptors (≤ 0.42 strong, ≤ 0.55 possible match); if a photo has several faces the largest one is used. Description search combines CLIP text similarity with age / gender cues parsed from the text.
+- Unmatched family searches stay on the watchlist. When an officer registers a found person, it is compared with every open report and matching families are notified.
+- Results are always presented as **possible matches for human review**. Officers verify photo ID and proof of relationship before approving a reunion; AI estimates are labelled as estimates.
 
 `server/ai/llm.js` contains an optional GPT-4o re-ranking layer that is only enabled if `OPENAI_API_KEY` is set. It is **not** required and not configured by default.
 
@@ -51,8 +61,11 @@ Both login screens have one-click demo account buttons, and the search/upload sc
 4. **iHunt** as `officer.omar` → *Add found item* → click a drone sample photo → *Apply suggestion* → submit. The success dialog shows how many citizens were notified.
 5. Back in **iSeek** (`ahmed` / `priya`) → bell icon shows the AI match notification.
 6. **iHunt** as the officer of the item's station → *Pending requests* → approve / reject. *Today's appointments* → *Handed over* / *No-show*.
+7. **iSeek** as `maria` → *Find a person* → boy demo photo → *Search* → face landmarks are drawn and "Leo" (in care at the airport) is the top possible match → *Request verified reunion*.
+8. **iSeek** as `priya` → *Find a person* → *My person reports & reunions* shows the open report for Riya. **iHunt** as `officer.james` → *People* → *Register found person* → pick the two woman demo photos → *Register & run face match* → the dialog shows the families that were notified. Priya's bell now shows the possible match.
+9. **iHunt** → *People* → *Reunion requests* → approve → *Reunited*.
 
-Seed data (8 locations, 39 found items with real photos, appointments, reports, notifications) is created automatically on first start with dates relative to "today". Reset it with `npm run seed:reset`.
+Seed data (8 locations, 39 found items with real photos, 4 people in care with synthetic faces, appointments, reports, notifications) is created automatically on first start with dates relative to "today". Reset it with `npm run seed:reset`.
 
 ## Run locally
 
@@ -81,23 +94,23 @@ Environment variables (all optional):
 
 The repo contains a [`render.yaml`](render.yaml) Blueprint: in Render choose **New → Blueprint**, pick this repository and apply.
 
-- Build: `npm ci && npm run build` (the model is cached into the build), start: `npm start`, health check: `/api/health`.
+- Build: `npm ci && npm run build` (the CLIP model is cached into the build; the face models load from `node_modules`), start: `npm start`, health check: `/api/health`.
 - A 1 GB persistent disk is mounted at `/var/data` (`DATA_DIR`) so items, photos and appointments survive restarts and deploys.
-- The plan is `standard` (2 GB RAM): the CLIP model needs ~500 MB of memory, which is too tight for 512 MB instances. Persistent disks also require a paid plan.
+- The plan is `standard` (2 GB RAM): CLIP plus the face models use roughly 500–600 MB of memory, which is too tight for 512 MB instances. Persistent disks also require a paid plan.
 - `JWT_SECRET` is generated automatically. Change `TZ` to the audience's timezone so "Today's appointments" lines up with local time.
 
 ## Project layout
 
 ```
 server/            Express API, SQLite (better-sqlite3), auth, uploads
-  ai/              CLIP engine, search/ranking agent, indexer, optional GPT layer
+  ai/              CLIP engine, search/ranking agent, face AI (face.js, people.js), indexer, optional GPT layer
   routes/          /api/police (iHunt) and /api/user (iSeek)
   seed.js          demo stations, accounts, items, appointments
 public/            static frontends (no build step)
   shared/          design system + UI helpers
   ihunt/  iseek/   the two apps
 seed/              seed item photos + attribution
-demo-photos/       sample "owner" photos for live demos
+demo-photos/       sample "owner" / family photos for live demos
 test/              end-to-end tests
 ```
 

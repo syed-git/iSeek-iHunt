@@ -179,3 +179,120 @@ test("today's appointments list approved pickups for the officer's station", asy
   assert.ok(r.data.appointments.length >= 3);
   assert.ok(r.data.appointments.every((a) => a.scheduled_at.startsWith(localDate())));
 });
+
+async function faceReady() {
+  const deadline = Date.now() + 120000;
+  while (Date.now() < deadline) {
+    const h = await (await fetch(`${BASE}/api/health`)).json();
+    if (h.face.ready) return h.face;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error('face models did not load');
+}
+
+test('face search maps landmarks and finds the person in care', async () => {
+  const face = await faceReady();
+  assert.equal(face.error, null);
+  const user = client();
+  await user('/api/user/login', { body: { username: 'maria', password: 'iseek@123' } });
+  const r = await user('/api/user/people/search/photo', { form: photoForm(['missing-boy-family.jpg']) });
+  assert.equal(r.status, 200);
+  const [a] = r.data.analyses;
+  assert.equal(a.faces.length, 1);
+  assert.equal(a.faces[0].landmarks.length, 68);
+  assert.ok(a.faces[0].box.w > 0 && a.faces[0].geometry.face_shape);
+  assert.equal(a.faces[0].descriptor, undefined);
+  assert.ok(r.data.found);
+  const top = r.data.matches[0];
+  assert.match(top.display_name, /Leo/);
+  assert.ok(top.distance < 0.42 && top.confidence >= 80);
+  assert.ok(top.station.name && top.station.phone);
+});
+
+test('person search rejects photos without a face', async () => {
+  const user = client();
+  await user('/api/user/login', { body: { username: 'maria', password: 'iseek@123' } });
+  const r = await user('/api/user/people/search/photo', { form: photoForm(['lost-guitar.jpg']) });
+  assert.equal(r.status, 400);
+  assert.match(r.data.error, /couldn't detect a face/i);
+  const police = client();
+  await police('/api/police/login', { body: { username: 'officer.james', password: 'ihunt@123' } });
+  const fd = photoForm(['lost-guitar.jpg']);
+  fd.append('station_id', '1');
+  fd.append('found_at', `${localDate()}T08:00`);
+  const p = await police('/api/police/people/persons', { form: fd });
+  assert.equal(p.status, 400);
+  assert.match(p.data.error, /no face/i);
+});
+
+test('description search uses age and gender cues', async () => {
+  const user = client();
+  await user('/api/user/login', { body: { username: 'chen', password: 'iseek@123' } });
+  const r = await user('/api/user/people/search/text', { body: { description: 'boy about 8 years old in a white shirt at the airport' } });
+  assert.equal(r.status, 200);
+  assert.equal(r.data.attrs.gender, 'male');
+  assert.equal(r.data.attrs.age, 8);
+  assert.match(r.data.matches[0].display_name, /Leo/);
+});
+
+test('unmatched face search is watched and the family is notified when officers register the person', async () => {
+  const user = client();
+  await user('/api/user/login', { body: { username: 'sara', password: 'iseek@123' } });
+  const fd = photoForm(['missing-riya.jpg']);
+  fd.append('name', 'Test Riya');
+  const r = await user('/api/user/people/search/photo', { form: fd });
+  assert.equal(r.status, 200);
+  assert.equal(r.data.found, false);
+  assert.match(r.data.message, /not been found yet/i);
+  const reports = await user('/api/user/people/reports');
+  assert.ok(reports.data.reports.some((x) => x.id === r.data.report_id && x.status === 'searching'));
+
+  const police = client();
+  await police('/api/police/login', { body: { username: 'officer.james', password: 'ihunt@123' } });
+  const pf = photoForm(['police-found-person-cctv.jpg', 'police-found-person-2.jpg']);
+  pf.append('station_id', '1');
+  pf.append('found_at', `${localDate()}T07:30`);
+  pf.append('found_location', 'Bus stop');
+  const created = await police('/api/police/people/persons', { form: pf });
+  assert.equal(created.status, 201);
+  assert.ok(created.data.matches.some((m) => m.report.id === r.data.report_id));
+
+  const n = await user('/api/user/notifications');
+  const note = n.data.notifications.find((x) => x.type === 'person_match' && x.person_id === created.data.person.id);
+  assert.ok(note);
+  const detail = await user(`/api/user/people/persons/${created.data.person.id}`);
+  assert.equal(detail.status, 200);
+  const stranger = client();
+  await stranger('/api/user/login', { body: { username: 'ahmed', password: 'iseek@123' } });
+  assert.equal((await stranger(`/api/user/people/persons/${created.data.person.id}`)).status, 404);
+});
+
+test('reunion request → officer approval → verified reunion', async () => {
+  const user = client();
+  await user('/api/user/login', { body: { username: 'john', password: 'iseek@123' } });
+  const s = await user('/api/user/people/search/photo', { form: photoForm(['missing-man-family.jpg']) });
+  const m = s.data.matches[0];
+  assert.ok(m);
+  const tomorrow = localDate(new Date(Date.now() + 86400000));
+  const slots = await user(`/api/user/stations/${m.station.id}/slots?date=${tomorrow}`);
+  const slot = slots.data.slots.find((x) => x.available);
+  const body = { person_id: m.id, report_id: s.data.report_id, scheduled_at: `${tomorrow}T${slot.time}`, relation: 'Child', proof: 'Family photos and his passport copy' };
+  const booked = await user('/api/user/people/reunions', { body });
+  assert.equal(booked.status, 201);
+  assert.equal(booked.data.reunion.status, 'pending');
+  assert.equal((await user('/api/user/people/reunions', { body })).status, 409);
+
+  const police = client();
+  await police('/api/police/login', { body: { username: 'officer.james', password: 'ihunt@123' } });
+  const list = await police(`/api/police/people/reunions?station_id=${m.station.id}&status=pending`);
+  assert.ok(list.data.reunions.some((x) => x.id === booked.data.reunion.id));
+  const ap = await police(`/api/police/people/reunions/${booked.data.reunion.id}/approve`, { body: { note: 'Bring ID' } });
+  assert.equal(ap.status, 200);
+  assert.equal(ap.data.reunion.status, 'approved');
+  const done = await police(`/api/police/people/reunions/${booked.data.reunion.id}/complete`, { method: 'POST' });
+  assert.equal(done.status, 200);
+  const person = await police(`/api/police/people/persons/${m.id}`);
+  assert.equal(person.data.person.status, 'reunited');
+  const n = await user('/api/user/notifications');
+  assert.ok(['reunion_approved', 'reunited'].every((t) => n.data.notifications.some((x) => x.type === t)));
+});

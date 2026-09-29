@@ -91,3 +91,21 @@ body { background: var(--bg); background-attachment: fixed; }
 .sample-strip { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .sample-strip button { border: 1px solid var(--border); background: var(--input); border-radius: 10px; padding: 4px; cursor: pointer; }
 .sample-strip img { width: 46px; height: 46px; object-fit: cover; border-radius: 7px; }
+
+.people-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.subtabs { display: inline-flex; flex-wrap: wrap; gap: 6px; padding: 5px; border-radius: 14px; background: var(--card); border: 1px solid var(--border); }
+.subtab { border: 0; background: transparent; color: var(--muted); font-weight: 600; padding: 9px 14px; border-radius: 10px; cursor: pointer; }
+.subtab.on { background: var(--grad); color: #fff; }
+.subtab .count { background: rgba(255, 255, 255, .14); padding: 1px 8px; border-radius: 999px; font-size: .75rem; margin-left: 4px; }
+.fa-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.person-card .pic { aspect-ratio: 1; }
+.person-card .pic .face-viz { height: 100%; border-radius: 0; }
+.req.reunion { grid-template-columns: 300px 1fr 280px; }
+.req.reunion .pic-pair { padding: 16px; background: rgba(124, 156, 255, .05); }
+.thumb-face { border: 2px solid transparent; padding: 0; background: none; border-radius: 12px; width: 72px; cursor: pointer; }
+.thumb-face:hover { border-color: var(--accent); }
+.quote { padding: 18px; border-radius: 14px; background: var(--chip); font-family: var(--display); }
+.review-note { background: rgba(255, 194, 75, .08); color: var(--gold); border: 1px solid rgba(255, 194, 75, .22); }
+@media (max-width: 960px) { .req.reunion { grid-template-columns: 1fr; } }
+.ai-box .face-pair { grid-template-columns: minmax(0, 170px) auto minmax(0, 170px); justify-content: center; }
+.ai-box .face-pair .vs { color: var(--gold); font-size: 1rem; }

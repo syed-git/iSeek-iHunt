@@ -5,6 +5,7 @@ const { PORT, ROOT, UPLOAD_DIR } = require('./config');
 require('./db');
 const { seedIfEmpty } = require('./seed');
 const engine = require('./ai/engine');
+const face = require('./ai/face');
 const indexer = require('./ai/indexer');
 const llm = require('./ai/llm');
 const { stations, categories } = require('./routes/common');
@@ -19,6 +20,7 @@ app.get('/api/health', (req, res) =>
   res.json({
     ok: true,
     ai: { ready: engine.state.ready, model: engine.state.model, error: engine.state.error, gpt: llm.enabled(), indexing: indexer.status },
+    face: { ready: face.state.ready, backend: face.state.backend, model: face.state.model, error: face.state.error },
   })
 );
 app.get('/api/public/meta', (req, res) => res.json({ stations: stations(), categories: categories() }));

@@ -61,3 +61,17 @@ All seed and demo photos are from [Wikimedia Commons](https://commons.wikimedia.
 | `demo-photos/lost-dji-drone.jpg` | [File:Quadcopter_camera_drone_in_flight.jpg](https://commons.wikimedia.org/wiki/File:Quadcopter_camera_drone_in_flight.jpg) | Josh Sorenson | CC0 |
 | `demo-photos/police-found-dji-drone.jpg` | [File:DJI_Phantom_4_Drone_(32285759641).jpg](https://commons.wikimedia.org/wiki/File:DJI_Phantom_4_Drone_(32285759641).jpg) | Tony Webster from Minneapolis, Minnesota, United States | CC BY-SA 2.0 |
 | `demo-photos/police-found-drone-2.jpg` | [File:DJI_Inspire_(33404444481).jpg](https://commons.wikimedia.org/wiki/File:DJI_Inspire_(33404444481).jpg) | Alessio Di Leo from Italia | CC BY 2.0 |
+
+## Missing-person demo portraits
+
+All portraits used by the missing / found persons demo are **AI-generated (StyleGAN) faces of people who do not exist**, released into the public domain on Wikimedia Commons. They are not real missing people. "Family photo" and "CCTV still" variants were derived locally (crop, mirror, rotation, colour / greyscale, blur) so the face AI is demonstrated on different photos of the same synthetic person.
+
+| File(s) | Source | Author | License |
+|---|---|---|---|
+| `seed/images/person-boy.jpg`, `demo-photos/missing-boy-family.jpg` (modified) | [File:Boy_1.jpg](https://commons.wikimedia.org/wiki/File:Boy_1.jpg) | Owlsmcgee (StyleGAN) | Public domain |
+| `seed/images/person-man.jpg`, `demo-photos/missing-man-family.jpg` (modified) | [File:Man_2.jpg](https://commons.wikimedia.org/wiki/File:Man_2.jpg) | Owlsmcgee (StyleGAN) | Public domain |
+| `seed/images/person-young-man.jpg`, `demo-photos/missing-young-man-family.jpg` (modified) | [File:GAN_Mensch_StyleGAN2.png](https://commons.wikimedia.org/wiki/File:GAN_Mensch_StyleGAN2.png) | StyleGAN2 | Public domain |
+| `seed/images/person-woman.jpg`, `demo-photos/missing-woman-family.jpg` (modified) | [File:This_Person_Does_Not_Exist_example.jpg](https://commons.wikimedia.org/wiki/File:This_Person_Does_Not_Exist_example.jpg) | StyleGAN2 | Public domain |
+| `demo-photos/missing-riya.jpg`, `demo-photos/police-found-person-cctv.jpg` (modified), `demo-photos/police-found-person-2.jpg` (modified) | [File:Woman_1.jpg](https://commons.wikimedia.org/wiki/File:Woman_1.jpg) | Owlsmcgee (StyleGAN) | Public domain |
+
+Face models: [`@vladmandic/face-api`](https://github.com/vladmandic/face-api) (MIT), bundled model weights.

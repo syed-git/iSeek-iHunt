@@ -64,6 +64,42 @@ function copyDemoPhoto(file) {
   return `lost/seed-${file}`;
 }
 
+function copyDemoTo(file, subdir) {
+  const dir = path.join(UPLOAD_DIR, subdir);
+  fs.mkdirSync(dir, { recursive: true });
+  const dest = path.join(dir, `seed-${file}`);
+  if (!fs.existsSync(dest)) fs.copyFileSync(path.join(SEED_DIR, '..', 'demo-photos', file), dest);
+  return `${subdir}/seed-${file}`;
+}
+
+// All faces are StyleGAN-generated portraits of people who do not exist (see seed/ATTRIBUTION.md).
+const PERSONS = [
+  {
+    station: 6, name: 'Leo (first name only)', gender: 'male', age: 8, days_ago: 0, time: '11:20', photo: 'person-boy.jpg',
+    found_location: 'Arrivals Hall, near Gate B baggage belt 4',
+    condition: 'Safe — with airport child-care staff',
+    description: 'Unaccompanied boy, white polo shirt and dark trousers. Speaks English, says his name is Leo and that he arrived with his mother.',
+  },
+  {
+    station: 8, name: null, gender: 'male', age: 40, days_ago: 1, time: '19:05', photo: 'person-man.jpg',
+    found_location: 'Platform 6 waiting room',
+    condition: 'Disoriented, unable to recall his address — medically checked, resting at the station office',
+    description: 'Adult man with short dark hair and a trimmed beard, dark jacket, lanyard without an ID card.',
+  },
+  {
+    station: 3, name: null, gender: 'male', age: 23, days_ago: 0, time: '08:40', photo: 'person-young-man.jpg',
+    found_location: 'Harbor Point ferry terminal',
+    condition: 'Well — separated from his tour group, phone battery dead',
+    description: 'Young man with short brown hair, light-blue t-shirt, limited English, carrying a backpack with a hostel key card.',
+  },
+  {
+    station: 1, name: null, gender: 'female', age: 40, days_ago: 2, time: '16:30', photo: 'person-woman.jpg',
+    found_location: 'Central Market, flower stalls',
+    condition: 'Memory loss — in care at the Central PS family room',
+    description: 'Woman with long dark wavy hair, warm smile, rust-coloured top. Remembers only the first name of her daughter.',
+  },
+];
+
 function seedIfEmpty() {
   const { n } = db.prepare('SELECT COUNT(*) AS n FROM stations').get();
   if (n > 0) return false;
@@ -138,13 +174,24 @@ function seedIfEmpty() {
     lrp.run(report.lastInsertRowid, copyDemoPhoto('lost-dji-drone.jpg'));
     lr.run(uid('sara'), 'text', 'Brown leather cowboy boots, size 8, lost in a yellow taxi', 'Clothing', 'searching');
 
+    const ps = db.prepare('INSERT INTO persons (station_id, officer_id, name, gender, approx_age, description, found_location, found_at, condition) VALUES (?,?,?,?,?,?,?,?,?)');
+    const pp = db.prepare('INSERT INTO person_photos (person_id, path) VALUES (?, ?)');
+    PERSONS.forEach((x) => {
+      const info = ps.run(x.station, officerFor(x.station), x.name, x.gender, x.age, x.description, x.found_location, daysFromToday(-x.days_ago, x.time), x.condition);
+      pp.run(info.lastInsertRowid, copySeedPhoto(x.photo));
+    });
+    const mr = db.prepare('INSERT INTO missing_reports (user_id, mode, name, age, gender, description, last_seen_location, last_seen_at, relation, status) VALUES (?,?,?,?,?,?,?,?,?,?)');
+    const riya = mr.run(uid('priya'), 'photo', 'Riya Patel', 22, 'female', 'Long brown hair with a fringe, grey hoodie.', 'Westfield Mall food court', daysFromToday(-1, '18:30'), 'Sister', 'searching');
+    db.prepare('INSERT INTO missing_report_photos (report_id, path) VALUES (?, ?)').run(riya.lastInsertRowid, copyDemoTo('missing-riya.jpg', 'missing'));
+    mr.run(uid('sara'), 'text', 'Harold Johnson', 78, 'male', 'My grandfather, 78 years old, grey hair, glasses, brown cardigan. He has early dementia.', 'Riverside park', daysFromToday(-1, '10:00'), 'Grandson / granddaughter', 'searching');
+
     const nt = db.prepare('INSERT INTO notifications (user_id, type, title, body, item_id) VALUES (?,?,?,?,?)');
     approved.forEach(([u, slug]) => {
       const s = STATIONS[itemStation(slug) - 1];
       nt.run(uid(u), 'approved', 'Appointment approved', `Your appointment to collect "${items.find((x) => x.slug === slug).title}" at ${s.name} has been approved. Please bring a photo ID.`, slugToId[slug]);
     });
   })();
-  console.log(`[seed] ${STATIONS.length} stations, ${OFFICERS.length} officers, ${USERS.length} users, ${items.length} found items`);
+  console.log(`[seed] ${STATIONS.length} stations, ${OFFICERS.length} officers, ${USERS.length} users, ${items.length} found items, ${PERSONS.length} people in care`);
   return true;
 }
 

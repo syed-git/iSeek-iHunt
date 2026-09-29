@@ -3,7 +3,7 @@ const { db, toBlob } = require('../db');
 const auth = require('../auth');
 const agent = require('../ai/agent');
 const { photosField, savePhotos } = require('../uploads');
-const { asyncH, stations, categories, appointmentRows, DATETIME_RE, DATE_RE } = require('./common');
+const { asyncH, stations, categories, appointmentRows, slotsFor, DATETIME_RE, DATE_RE } = require('./common');
 
 const router = express.Router();
 const requireUser = auth.requireRole('user');
@@ -138,24 +138,6 @@ router.get('/items/:id', (req, res) => {
   return res.json({ item: agent.publicItem(item) });
 });
 
-function slotsFor(stationId, date) {
-  const st = db.prepare('SELECT open_time, close_time FROM stations WHERE id = ?').get(stationId);
-  if (!st) return [];
-  const toMin = (t) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
-  const open = Math.max(toMin(st.open_time), 8 * 60);
-  const close = Math.min(toMin(st.close_time), 21 * 60);
-  const taken = db
-    .prepare("SELECT substr(scheduled_at,12,5) t, COUNT(*) n FROM appointments WHERE station_id = ? AND substr(scheduled_at,1,10) = ? AND status IN ('pending','approved') GROUP BY t")
-    .all(stationId, date);
-  const load = Object.fromEntries(taken.map((t) => [t.t, t.n]));
-  const out = [];
-  for (let m = open; m + 30 <= close; m += 30) {
-    const t = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-    out.push({ time: t, available: (load[t] || 0) < 3 });
-  }
-  return out;
-}
-
 router.get('/stations/:id/slots', (req, res) => {
   const date = DATE_RE.test(req.query.date || '') ? req.query.date : null;
   if (!date) return res.status(400).json({ error: 'Pick a date' });
@@ -209,5 +191,7 @@ router.post('/notifications/read-all', (req, res) => {
 });
 
 router.get('/categories', (req, res) => res.json({ categories: categories() }));
+
+router.use('/people', require('./user-people'));
 
 module.exports = router;
