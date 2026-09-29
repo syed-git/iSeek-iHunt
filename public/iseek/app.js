@@ -793,7 +793,7 @@
     reunions.forEach((r) => {
       const c = el(html`<div class="card req-card fade-in">
         <div class="pic">${raw(r.person_photo ? html`<img src="${r.person_photo}" alt="">` : '')}</div>
-        <div><div class="row wrap" style="gap:8px"><b>${r.person_display}</b>${raw(statusChip(r.status))}</div>
+        <div><div class="row wrap" style="gap:8px"><b>${r.person_display}</b>${raw(statusChip(r.status === 'completed' ? 'reunited' : r.status))}</div>
           <div class="small" style="margin-top:4px">📅 <b>${fmtDateTime(r.scheduled_at)}</b> · ${r.relation}</div>
           <div class="muted small">${stationIcon(r.station_type)} ${r.station_name} · ${r.station_address} · 📞 ${r.station_phone}</div>
           ${raw(r.status === 'approved' ? html`<div class="notice ok">✅ Approved${r.decided_by_name ? ` by ${r.decided_by_name}` : ''}. Bring photo ID and proof of relationship.${r.police_note ? ` Note: ${r.police_note}` : ''}</div>` : '')}

@@ -575,7 +575,7 @@
       const card = el(html`<article class="req reunion fade-in">
         <div class="pic-pair face-pair">${raw(fam ? html`<div>${raw(faceSvg(fam, { crop: true }))}<div class="cap">Family photo</div></div>` : '<div class="muted small">No family photo</div>')}<div class="vs">${r.match_score ? `${Math.round(r.match_score)}%` : 'VS'}</div><div>${raw(r.person ? faceSvg(r.person.photos[0], { crop: true }) : '')}<div class="cap">In care</div></div></div>
         <div class="mid">
-          <div class="row wrap" style="gap:8px">${raw(statusChip(r.status))}<span class="muted tiny">requested ${ago(r.created_at)}</span></div>
+          <div class="row wrap" style="gap:8px">${raw(statusChip(r.status === 'completed' ? 'reunited' : r.status))}<span class="muted tiny">requested ${ago(r.created_at)}</span></div>
           <h3 style="margin-top:10px">${r.person ? r.person.display_name : 'Person'}${r.report && r.report.name ? html` <span class="muted small">· reported as “${r.report.name}”</span>` : ''}</h3>
           <div class="proof"><b>Relation: ${r.relation}</b>${r.proof}</div>
           <div class="row wrap small" style="margin-top:12px;gap:16px"><span>👤 <b>${r.user_name}</b> <span class="muted">@${r.user_username}</span></span><span>📞 ${r.contact_phone || r.user_phone || '—'}</span><span>✉️ ${r.user_email || '—'}</span></div>
