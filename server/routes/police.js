@@ -212,4 +212,6 @@ router.post('/appointments/:id/no-show', (req, res) => {
 
 router.get('/ai/status', (req, res) => res.json({ ready: engine.state.ready, model: engine.state.model }));
 
+router.use('/people', require('./police-people'));
+
 module.exports = router;

@@ -1,6 +1,8 @@
 const path = require('path');
 const engine = require('./engine');
 const agent = require('./agent');
+const face = require('./face');
+const people = require('./people');
 const { db, toBlob } = require('../db');
 const { UPLOAD_DIR } = require('../config');
 
@@ -14,7 +16,11 @@ async function indexPending() {
     const items = db.prepare('SELECT DISTINCT i.id FROM items i JOIN item_photos p ON p.item_id = i.id WHERE p.embedding IS NULL OR i.text_embedding IS NULL').all();
     const reportPhotos = db.prepare('SELECT id, path FROM lost_report_photos WHERE embedding IS NULL').all();
     const textReports = db.prepare("SELECT id, description FROM lost_reports WHERE mode = 'text' AND text_embedding IS NULL AND description IS NOT NULL").all();
-    status.total = items.length + reportPhotos.length + textReports.length;
+    await face.load();
+    const persons = db.prepare('SELECT DISTINCT person_id AS id FROM person_photos WHERE faces IS NULL OR clip_embedding IS NULL').all();
+    const missingPhotos = db.prepare('SELECT id FROM missing_report_photos WHERE faces IS NULL').all();
+    const missingText = db.prepare("SELECT id, description FROM missing_reports WHERE mode = 'text' AND text_embedding IS NULL AND description IS NOT NULL").all();
+    status.total = items.length + reportPhotos.length + textReports.length + persons.length + missingPhotos.length + missingText.length;
     status.done = 0;
     for (const { id } of items) {
       const photos = db.prepare('SELECT path FROM item_photos WHERE item_id = ? ORDER BY id').all(id);
@@ -29,6 +35,19 @@ async function indexPending() {
     for (const r of textReports) {
       const emb = await engine.embedText(`a photo of ${r.description}`);
       db.prepare('UPDATE lost_reports SET text_embedding = ? WHERE id = ?').run(toBlob(emb), r.id);
+      status.done++;
+    }
+    for (const { id } of persons) {
+      await people.indexPerson(id);
+      status.done++;
+    }
+    for (const { id } of missingPhotos) {
+      await people.indexReportPhoto(id);
+      status.done++;
+    }
+    for (const r of missingText) {
+      const emb = await engine.embedText(`a photo of ${r.description}`);
+      db.prepare('UPDATE missing_reports SET text_embedding = ? WHERE id = ?').run(toBlob(emb), r.id);
       status.done++;
     }
     if (status.total) console.log(`[ai] indexed ${status.total} pending records`);

@@ -1,9 +1,9 @@
 const engine = require('../server/ai/engine');
+const face = require('../server/ai/face');
 
-engine
-  .load()
+Promise.all([engine.load(), face.load()])
   .then(() => {
-    console.log('Models cached.');
+    console.log(`Models cached (face backend: ${face.state.backend}).`);
     process.exit(0);
   })
   .catch((err) => {

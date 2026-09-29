@@ -170,6 +170,7 @@
     pending: ['warn', 'Pending review'], approved: ['ok', 'Approved'], rejected: ['bad', 'Rejected'], cancelled: ['', 'Cancelled'],
     completed: ['info', 'Collected'], no_show: ['bad', 'No-show'], available: ['ok', 'Available'], reserved: ['warn', 'Reserved'], returned: ['info', 'Returned'],
     searching: ['accent', 'AI watching'], matched: ['ok', 'Match found'], closed: ['', 'Closed'],
+    in_care: ['warn', 'In care'], reunited: ['info', 'Reunited'], draft: ['', 'Draft'],
   };
   const statusChip = (s) => { const [k, label] = STATUS[s] || ['', s]; return html`<span class="chip ${k}"><span class="dot"></span>${label}</span>`; };
   const mapLink = (st) => (st && st.lat != null ? `https://www.google.com/maps/search/?api=1&query=${st.lat},${st.lng}` : '#');
@@ -179,5 +180,85 @@
   };
   const orbs = () => { document.body.insertAdjacentHTML('afterbegin', '<div class="bg-orbs"><span></span><span></span><span></span></div>'); };
 
-  window.UI = { esc, html, raw, el, makeApi, toast, modal, confirmBox, dropzone, gallery, wireGallery, localDate, localDateTime, parseLocal, fmtDate, fmtTime, fmtDateTime, ago, initials, stationIcon, statusChip, mapLink, busy, orbs };
+  const FACE_PARTS = [
+    ['jaw', '#22d3ee', 0, 16, false], ['brows', '#fbbf24', 17, 21, false], ['brows', '#fbbf24', 22, 26, false],
+    ['nose', '#a78bfa', 27, 30, false], ['nose', '#a78bfa', 31, 35, false], ['eyes', '#34d399', 36, 41, true], ['eyes', '#34d399', 42, 47, true],
+    ['mouth', '#f472b6', 48, 59, true], ['mouth', '#f472b6', 60, 67, true],
+  ];
+  const FACE_LEGEND = [['Jawline', '#22d3ee'], ['Eyebrows', '#fbbf24'], ['Eyes', '#34d399'], ['Nose', '#a78bfa'], ['Mouth', '#f472b6']];
+  const n1 = (v) => Math.round(v * 10) / 10;
+
+  function faceMarks(f, primary) {
+    const b = f.box;
+    const r = n1(Math.max(1, b.w / 90));
+    const parts = (f.landmarks || []).length === 68
+      ? FACE_PARTS.map(([, c, a, z, closed]) => {
+        const pts = f.landmarks.slice(a, z + 1).map((p) => p.join(',')).join(' ');
+        return `<${closed ? 'polygon' : 'polyline'} class="lm-line" points="${pts}" stroke="${c}"/>`;
+      }).join('') + f.landmarks.map((p, i) => `<circle class="lm-pt" cx="${p[0]}" cy="${p[1]}" r="${r}" style="animation-delay:${i * 12}ms"/>`).join('')
+      : '';
+    const c = n1(b.w * 0.18);
+    const corners = [[b.x, b.y, 1, 1], [b.x + b.w, b.y, -1, 1], [b.x, b.y + b.h, 1, -1], [b.x + b.w, b.y + b.h, -1, -1]]
+      .map(([x, y, dx, dy]) => `<path class="fbox" d="M${n1(x)} ${n1(y + dy * c)}V${n1(y)}H${n1(x + dx * c)}"/>`).join('');
+    return `<g class="face-g ${primary ? 'primary' : 'other'}"><rect class="fbox-bg" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" rx="${n1(b.w * 0.04)}"/>${corners}${primary ? parts : ''}</g>`;
+  }
+
+  // Renders a photo with its detected face box and 68 landmarks as an SVG; `crop` zooms into the primary face.
+  function faceSvg(photo, { face, crop = false, all = true, cls = '' } = {}) {
+    if (!photo) return '';
+    const url = typeof photo === 'string' ? photo : photo.url;
+    const W = photo.width;
+    const H = photo.height;
+    const faces = (photo.faces || []);
+    const f = face || faces[0];
+    if (!W || !H) return html`<div class="face-viz ${cls}"><img src="${url}" alt=""></div>`;
+    let vb = `0 0 ${W} ${H}`;
+    if (crop && f) {
+      const size = Math.min(Math.max(f.box.w, f.box.h) * 1.75, W, H);
+      const cx = f.box.x + f.box.w / 2;
+      const cy = f.box.y + f.box.h / 2 - f.box.h * 0.04;
+      const x = Math.min(Math.max(0, cx - size / 2), W - size);
+      const y = Math.min(Math.max(0, cy - size / 2), H - size);
+      vb = `${n1(x)} ${n1(y)} ${n1(size)} ${n1(size)}`;
+    }
+    const same = (a, b) => a && b && a.box.x === b.box.x && a.box.y === b.box.y;
+    const drawn = all ? faces.slice() : f ? [f] : [];
+    if (f && !drawn.some((x) => same(x, f))) drawn.push(f);
+    return `<div class="face-viz ${esc(cls)} ${crop ? 'crop' : ''}"><svg viewBox="${vb}" preserveAspectRatio="xMidYMid ${crop ? 'slice' : 'meet'}" role="img" aria-label="Photo with facial landmarks">
+      <image href="${esc(url)}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="none"/>
+      ${drawn.map((x) => faceMarks(x, same(x, f))).join('')}</svg>${faces.length > 1 && !crop ? `<span class="face-count">${faces.length} faces</span>` : ''}</div>`;
+  }
+
+  const faceLegend = () => `<div class="face-legend">${FACE_LEGEND.map(([l, c]) => `<span><i style="background:${c}"></i>${l}</span>`).join('')}</div>`;
+
+  function faceFeatures(f) {
+    if (!f) return '';
+    const g = f.geometry || {};
+    const chips = [
+      `🎯 Face detected ${Math.round(f.score * 100)}%`,
+      `🎂 Age ~${f.age} (AI estimate)`,
+      `⚧ ${f.gender} (${Math.round(f.gender_p * 100)}%, AI estimate)`,
+      `🙂 ${f.expression}`,
+      g.face_shape && `🔷 ${g.face_shape} face`,
+      g.pose && `🧭 ${g.pose}${g.roll ? `, tilt ${g.roll}°` : ''}`,
+      g.symmetry != null && `⚖️ Symmetry ${g.symmetry}%`,
+      g.eye_spacing != null && `👁️ Eye spacing ${g.eye_spacing}% of face width`,
+    ].filter(Boolean);
+    return html`<div class="face-feats">${chips.map((c) => html`<span class="chip">${c}</span>`)}</div>`;
+  }
+
+  const GEO_LABELS = {
+    eye_spacing: ['Eye spacing', '% of face width', 12], nose_length: ['Nose length', '% of face height', 10], nose_width: ['Nose width', '% of eye distance', 14],
+    mouth_width: ['Mouth width', '% of eye distance', 20], jaw_taper: ['Jaw taper', '% of face width', 10], face_ratio: ['Face height ÷ width', '', 0.2],
+  };
+  function geometryTable(rows, [la, lb] = ['Photo', 'Record']) {
+    if (!rows || !rows.length) return '';
+    return html`<table class="geo"><thead><tr><th>Facial proportion</th><th>${la}</th><th>${lb}</th><th>Agreement</th></tr></thead><tbody>${rows.map((r) => {
+      const [label, unit, tol] = GEO_LABELS[r.key] || [r.key, '', 1];
+      const agree = Math.max(0, Math.round((1 - r.diff / tol) * 100));
+      return html`<tr><td>${label}<div class="muted tiny">${unit}</div></td><td>${r.a}</td><td>${r.b}</td><td><div class="ai-bar"><i style="width:${agree}%"></i></div></td></tr>`;
+    })}</tbody></table>`;
+  }
+
+  window.UI = { esc, html, raw, el, makeApi, toast, modal, confirmBox, dropzone, gallery, wireGallery, localDate, localDateTime, parseLocal, fmtDate, fmtTime, fmtDateTime, ago, initials, stationIcon, statusChip, mapLink, busy, orbs, faceSvg, faceLegend, faceFeatures, geometryTable };
 })();

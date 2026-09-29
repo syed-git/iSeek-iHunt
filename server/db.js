@@ -117,10 +117,99 @@ CREATE TABLE IF NOT EXISTS notifications (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS persons (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  station_id INTEGER NOT NULL REFERENCES stations(id),
+  officer_id INTEGER REFERENCES officers(id),
+  name TEXT,
+  gender TEXT,
+  approx_age INTEGER,
+  description TEXT,
+  found_location TEXT,
+  found_at TEXT NOT NULL,
+  condition TEXT,
+  status TEXT NOT NULL DEFAULT 'in_care',
+  ai_age INTEGER,
+  ai_gender TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS person_photos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  person_id INTEGER NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+  path TEXT NOT NULL,
+  width INTEGER,
+  height INTEGER,
+  faces TEXT,
+  descriptor BLOB,
+  clip_embedding BLOB
+);
+
+CREATE TABLE IF NOT EXISTS missing_reports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  mode TEXT NOT NULL,
+  name TEXT,
+  age INTEGER,
+  gender TEXT,
+  description TEXT,
+  last_seen_location TEXT,
+  last_seen_at TEXT,
+  relation TEXT,
+  text_embedding BLOB,
+  status TEXT NOT NULL DEFAULT 'searching',
+  matched_person_id INTEGER REFERENCES persons(id),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS missing_report_photos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  report_id INTEGER NOT NULL REFERENCES missing_reports(id) ON DELETE CASCADE,
+  path TEXT NOT NULL,
+  width INTEGER,
+  height INTEGER,
+  faces TEXT,
+  descriptor BLOB
+);
+
+CREATE TABLE IF NOT EXISTS person_matches (
+  report_id INTEGER NOT NULL REFERENCES missing_reports(id) ON DELETE CASCADE,
+  person_id INTEGER NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+  score REAL,
+  distance REAL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (report_id, person_id)
+);
+
+CREATE TABLE IF NOT EXISTS reunions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id),
+  person_id INTEGER NOT NULL REFERENCES persons(id),
+  station_id INTEGER NOT NULL REFERENCES stations(id),
+  report_id INTEGER REFERENCES missing_reports(id),
+  scheduled_at TEXT NOT NULL,
+  relation TEXT,
+  proof TEXT,
+  contact_phone TEXT,
+  match_score REAL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  police_note TEXT,
+  decided_by INTEGER REFERENCES officers(id),
+  decided_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_items_status ON items(status);
+CREATE INDEX IF NOT EXISTS idx_persons_status ON persons(status);
+CREATE INDEX IF NOT EXISTS idx_missing_status ON missing_reports(status);
+CREATE INDEX IF NOT EXISTS idx_reunion_status ON reunions(status, scheduled_at);
 CREATE INDEX IF NOT EXISTS idx_appt_status ON appointments(status, scheduled_at);
 CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications(user_id, is_read);
 `);
+
+if (!db.prepare('PRAGMA table_info(notifications)').all().some((c) => c.name === 'person_id')) {
+  db.exec('ALTER TABLE notifications ADD COLUMN person_id INTEGER REFERENCES persons(id)');
+}
 
 function toBlob(vec) {
   if (!vec) return null;

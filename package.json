@@ -18,6 +18,9 @@
   },
   "dependencies": {
     "@huggingface/transformers": "4.3.0",
+    "@tensorflow/tfjs": "4.22.0",
+    "@tensorflow/tfjs-backend-wasm": "4.22.0",
+    "@vladmandic/face-api": "1.7.15",
     "bcryptjs": "3.0.3",
     "better-sqlite3": "12.11.1",
     "cookie-parser": "1.4.7",

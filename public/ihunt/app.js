@@ -1,8 +1,8 @@
 (function () {
-  const { html, raw, el, toast, modal, confirmBox, dropzone, gallery, wireGallery, localDate, localDateTime, fmtDate, fmtTime, fmtDateTime, initials, stationIcon, statusChip, busy, orbs, ago } = UI;
+  const { html, raw, el, toast, modal, confirmBox, dropzone, gallery, wireGallery, localDate, localDateTime, fmtDate, fmtTime, fmtDateTime, initials, stationIcon, statusChip, busy, orbs, ago, faceSvg, faceLegend, faceFeatures } = UI;
   const app = document.getElementById('app');
   const api = UI.makeApi('/api/police', () => showLogin());
-  const state = { officer: null, meta: null, station: 'mine', tab: 'add', stats: null };
+  const state = { officer: null, meta: null, station: 'mine', tab: 'add', stats: null, peopleView: 'register' };
 
   const DEMO = [
     ['officer.james', 'James Carter', 'Central PS'],
@@ -80,7 +80,7 @@
   async function boot() {
     if (!state.meta) state.meta = await api('/meta');
     const hashTab = location.hash.replace('#', '');
-    if (['add', 'today', 'pending', 'inventory'].includes(hashTab)) state.tab = hashTab;
+    if (['add', 'today', 'pending', 'inventory', 'people'].includes(hashTab)) state.tab = hashTab;
     renderShell();
   }
 
@@ -121,6 +121,7 @@
           <button class="tab" data-tab="today">📅 Today's appointments <span class="count" data-c="today">·</span></button>
           <button class="tab" data-tab="pending">⏳ Pending requests <span class="count" data-c="pending">·</span></button>
           <button class="tab" data-tab="inventory">📦 Inventory</button>
+          <button class="tab" data-tab="people">🧑 People</button>
         </nav>
         <section id="panel" style="margin-top:22px"></section>
       </main>
@@ -148,6 +149,7 @@
       if (state.tab === 'add') renderAdd(panel);
       else if (state.tab === 'today') await renderToday(panel);
       else if (state.tab === 'pending') await renderPending(panel);
+      else if (state.tab === 'people') await renderPeople(panel);
       else await renderInventory(panel);
     } catch (err) {
       panel.innerHTML = html`<div class="card empty-state"><div class="big">⚠️</div><p>${err.message}</p></div>`;
@@ -405,6 +407,217 @@
       </div></div>`,
     });
     wireGallery(m.el);
+  }
+
+  const PERSON_SAMPLES = ['police-found-person-cctv.jpg', 'police-found-person-2.jpg'];
+  const PEOPLE_VIEWS = [['register', '➕ Register found person'], ['care', '🧑 People in care'], ['reunions', '🤝 Reunion requests'], ['missing', '🔭 Missing reports']];
+
+  async function renderPeople(panel) {
+    const s = await api(`/people/stats?${q()}`);
+    const counts = { care: s.in_care, reunions: s.reunions_pending + s.reunions_approved, missing: s.missing_open };
+    panel.innerHTML = html`<div class="people-head fade-in">
+        <nav class="subtabs">${PEOPLE_VIEWS.map(([k, l]) => html`<button class="subtab ${state.peopleView === k ? 'on' : ''}" data-v="${k}">${l}${raw(counts[k] != null ? html` <span class="count">${counts[k]}</span>` : '')}</button>`)}</nav>
+        <span class="spacer"></span><span class="chip">🫂 ${s.reunited} reunited</span>
+      </div><div id="pp" style="margin-top:18px"></div>`;
+    panel.querySelectorAll('.subtab').forEach((b) => b.addEventListener('click', () => { state.peopleView = b.dataset.v; renderPeople(panel); }));
+    const pp = panel.querySelector('#pp');
+    if (state.peopleView === 'care') await renderInCare(pp);
+    else if (state.peopleView === 'reunions') await renderReunions(pp);
+    else if (state.peopleView === 'missing') await renderMissing(pp);
+    else renderRegister(pp, panel);
+  }
+
+  function renderRegister(pp, panel) {
+    const o = state.officer;
+    const defStation = state.station === 'mine' || state.station === 'all' ? o.station_id : Number(state.station);
+    pp.innerHTML = html`<form class="form-grid fade-in" id="personForm">
+      <div class="card stack">
+        <h3>Found / unidentified person</h3>
+        <div class="grid cols-2">
+          <label class="field"><span>Station / location in care</span>
+            <select class="input" name="station_id" required>${state.meta.stations.map((st) => html`<option value="${st.id}" ${raw(st.id === defStation ? 'selected' : '')}>${stationIcon(st.type)} ${st.name}</option>`)}</select></label>
+          <label class="field"><span>Date &amp; time found</span><input class="input" type="datetime-local" name="found_at" max="${localDateTime()}" value="${localDateTime()}" required></label>
+        </div>
+        <div class="grid cols-2">
+          <label class="field"><span>Where found</span><input class="input" name="found_location" maxlength="200" placeholder="e.g. Platform 6 waiting room"></label>
+          <label class="field"><span>Name (if known)</span><input class="input" name="name" maxlength="80" placeholder="Leave blank if unidentified"></label>
+        </div>
+        <div class="grid cols-2">
+          <label class="field"><span>Approx. age</span><input class="input" type="number" name="approx_age" min="1" max="109" placeholder="AI can suggest"></label>
+          <label class="field"><span>Gender</span><select class="input" name="gender"><option value="">Not recorded</option><option value="female">Female</option><option value="male">Male</option></select></label>
+        </div>
+        <label class="field"><span>Condition &amp; care status</span><input class="input" name="condition" maxlength="200" placeholder="e.g. Safe — with child-care staff"></label>
+        <label class="field"><span>Appearance &amp; circumstances</span><textarea class="input" name="description" maxlength="1000" placeholder="Clothing, language, what they said, belongings…"></textarea></label>
+        <div class="row"><span class="spacer"></span><button type="reset" class="btn ghost">Clear</button><button type="submit" class="btn primary lg">💾 Register &amp; run face match</button></div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <div class="row" style="margin-bottom:12px"><h3>Photos</h3><span class="spacer"></span><span class="chip" id="photoCount">0 / 5</span></div>
+          <div id="dz"></div>
+          <div class="muted tiny" style="margin-top:12px">Demo photos (AI-generated faces):</div>
+          <div class="sample-strip">${PERSON_SAMPLES.map((x) => html`<button type="button" data-sample="${x}"><img src="/demo-photos/${x}" alt=""></button>`)}</div>
+        </div>
+        <div class="ai-box" id="faceBox"><h4>🧠 Face AI</h4><p class="muted small" style="margin-top:6px">Add a photo and the face AI will detect the face, map 68 facial landmarks and estimate age.</p></div>
+      </div>
+    </form>`;
+    const form = pp.querySelector('#personForm');
+    let timer = null;
+    let estimate = null;
+    const box = pp.querySelector('#faceBox');
+    const dz = dropzone(pp.querySelector('#dz'), {
+      hint: 'Drop clear photos of the person',
+      onChange: (files) => {
+        pp.querySelector('#photoCount').textContent = `${files.length} / 5`;
+        clearTimeout(timer);
+        if (files.length) timer = setTimeout(() => analyze(files), 350);
+      },
+    });
+    pp.querySelectorAll('[data-sample]').forEach((b) => b.addEventListener('click', () => dz.addUrl(`/demo-photos/${b.dataset.sample}`)));
+
+    async function analyze(files) {
+      box.innerHTML = '<h4>🧠 Face AI</h4><div class="row" style="margin-top:10px"><span class="spin" style="border:2px solid rgba(124,156,255,.3);border-top-color:#7c9cff;width:18px;height:18px;border-radius:50%;animation:spin .8s linear infinite"></span><span class="muted small">Detecting faces &amp; landmarks…</span></div>';
+      const fd = new FormData();
+      files.forEach((f) => fd.append('photos', f));
+      try {
+        const { analyses } = await api('/people/analyze', { form: fd });
+        const urls = files.map((f) => URL.createObjectURL(f));
+        const faces = analyses.map((a) => a.faces[0]).filter(Boolean);
+        estimate = faces.length ? { age: Math.round(faces.reduce((t, f) => t + f.age, 0) / faces.length), gender: faces[0].gender } : null;
+        box.innerHTML = html`<h4>🧠 Face AI <span class="spacer"></span><span class="chip ${faces.length ? 'ok' : 'bad'} tiny">${faces.length} of ${analyses.length} photo${analyses.length > 1 ? 's' : ''} with a face</span></h4>
+          <div class="fa-grid" style="margin-top:12px">${analyses.map((a, i) => faceSvg({ ...a, url: urls[i] }))}</div>
+          <div style="margin-top:10px">${raw(faceLegend())}</div>
+          ${raw(faces[0] ? html`<div style="margin-top:10px">${raw(faceFeatures(faces[0]))}</div><button type="button" class="btn primary sm" style="margin-top:12px" id="applyFace">✨ Use AI age &amp; gender estimate</button>` : '<p class="small" style="margin-top:10px;color:var(--bad)">No face detected — use a clear, front-facing photo.</p>')}`;
+        const ap = box.querySelector('#applyFace');
+        if (ap) ap.addEventListener('click', () => { form.approx_age.value = estimate.age; form.gender.value = estimate.gender; toast('AI estimate applied — please verify', 'ok'); });
+      } catch (err) {
+        box.innerHTML = html`<h4>🧠 Face AI</h4><p class="muted small" style="margin-top:6px">${err.message}</p>`;
+      }
+    }
+
+    form.addEventListener('reset', () => setTimeout(() => { dz.clear(); form.found_at.value = localDateTime(); }, 0));
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!dz.files.length) return toast('Please add at least one photo of the person', 'bad');
+      if (form.found_at.value > localDateTime()) return toast('The found date/time cannot be in the future', 'bad');
+      const fd = new FormData(form);
+      dz.files.forEach((f) => fd.append('photos', f));
+      const btn = form.querySelector('button[type=submit]');
+      busy(btn, true, 'Registering & face-matching…');
+      try {
+        const { person, matches } = await api('/people/persons', { form: fd });
+        busy(btn, false);
+        form.reset();
+        const m = modal({
+          title: 'Person registered',
+          wide: matches.length > 0,
+          body: html`<div class="success-burst"><div class="big">✅</div><h3 style="margin-top:8px">${person.display_name}</h3>
+            <p class="muted small" style="margin-top:6px">${stationIcon(person.station.type)} ${person.station.name} · ${person.photos.length} photo${person.photos.length > 1 ? 's' : ''} face-indexed</p></div>
+            ${raw(matches.length ? html`<div class="ai-box" style="margin-top:16px"><b>🔔 ${matches.length} famil${matches.length > 1 ? 'ies were' : 'y was'} notified of a possible match</b><div class="muted small">The face AI compared this person with every open missing-person report on iSeek.</div>
+              ${matches.map((x) => html`<div class="face-pair" style="margin-top:14px"><div>${raw(x.report.photos[x.query_photo || 0] ? faceSvg(x.report.photos[x.query_photo || 0], { crop: true }) : html`<div class="muted small">“${x.report.description}”</div>`)}<div class="cap">Family photo · ${x.report.user_name}</div></div>
+                <div class="vs">${x.confidence}%</div><div>${raw(faceSvg(person.photos[x.best_photo || 0], { crop: true, face: x.target_face }))}<div class="cap">${x.report.name || 'Reported person'}</div></div></div>`)}</div>` : '<p class="muted small" style="margin-top:12px;text-align:center">No open family reports match yet — families searching later will find this person.</p>')}`,
+          foot: html`<button class="btn ghost" data-close>Register another</button><button class="btn primary" data-care>View people in care</button>`,
+        });
+        m.$('[data-care]').addEventListener('click', () => { m.close(); state.peopleView = 'care'; renderPeople(panel); });
+      } catch (err) {
+        busy(btn, false);
+        toast(err.message, 'bad');
+      }
+    });
+  }
+
+  async function renderInCare(pp, status = 'in_care') {
+    const { persons } = await api(`/people/persons?${q({ status })}`);
+    pp.innerHTML = html`<div class="filters fade-in"><select class="input" id="pStatus" style="max-width:220px"><option value="in_care">In care</option><option value="reunited">Reunited</option></select><span class="spacer"></span><span class="chip">${persons.length} ${persons.length === 1 ? 'person' : 'people'}</span></div><div class="grid auto" id="pg"></div>`;
+    pp.querySelector('#pStatus').value = status;
+    pp.querySelector('#pStatus').addEventListener('change', (e) => renderInCare(pp, e.target.value));
+    const grid = pp.querySelector('#pg');
+    if (!persons.length) grid.innerHTML = '<div class="card empty-state" style="grid-column:1/-1"><div class="big">🧑</div><p class="muted">Nobody registered here.</p></div>';
+    persons.forEach((p) => {
+      const c = el(html`<div class="inv-card person-card fade-in"><div class="pic">${raw(faceSvg(p.photos[0], { crop: true }))}${raw(statusChip(p.status))}</div>
+        <div class="body"><b>${p.display_name}</b><div class="muted small" style="margin-top:4px">${p.age ? `~${p.age} yrs` : 'Age unknown'}${p.gender ? ` · ${p.gender}` : ''} · ${fmtDate(p.found_at)}</div>
+        <div class="muted tiny" style="margin-top:6px">📍 ${p.found_location || p.station.name}</div></div></div>`);
+      c.addEventListener('click', () => openPersonPolice(p, () => renderInCare(pp, status)));
+      grid.appendChild(c);
+    });
+  }
+
+  function openPersonPolice(p, onChange) {
+    const m = modal({
+      title: html`🧑 ${p.display_name}`,
+      wide: true,
+      body: html`<div class="grid cols-2"><div class="stack"><div id="pmain">${raw(faceSvg(p.photos[0]))}</div>
+          ${raw(p.photos.length > 1 ? html`<div class="row" style="gap:8px">${p.photos.map((ph, i) => html`<button type="button" class="thumb-face" data-i="${i}">${raw(faceSvg(ph, { crop: true }))}</button>`)}</div>` : '')}${raw(faceLegend())}</div>
+        <div class="stack"><div class="row wrap">${raw(statusChip(p.status))}</div>
+          <dl class="kv"><dt>Age</dt><dd>${p.age ? `~${p.age}` : '—'}${p.age_source === 'ai' ? ' (AI estimate)' : ''}${p.ai_age && p.age_source !== 'ai' ? ` · AI est. ${p.ai_age}` : ''}</dd><dt>Gender</dt><dd>${p.gender || '—'}${p.gender_source === 'ai' ? ' (AI estimate)' : ''}</dd>
+            <dt>Found</dt><dd>${fmtDateTime(p.found_at)}</dd><dt>Where</dt><dd>${p.found_location || '—'}</dd><dt>Condition</dt><dd>${p.condition || '—'}</dd><dt>In care at</dt><dd>${p.station.name}</dd><dt>Registered by</dt><dd>${p.officer ? `${p.officer.name} · ${p.officer.badge}` : '—'}</dd></dl>
+          ${raw(p.description ? html`<p class="small">${p.description}</p>` : '')}
+          ${raw(p.photos[0] && p.photos[0].faces[0] ? faceFeatures(p.photos[0].faces[0]) : '')}</div></div>`,
+      foot: p.status === 'in_care' ? html`<button class="btn ghost" data-close>Close</button><button class="btn ok" data-reunited>🫂 Mark reunited</button>` : html`<button class="btn ghost" data-close>Close</button>`,
+    });
+    m.el.querySelectorAll('.thumb-face').forEach((b) => b.addEventListener('click', () => { m.$('#pmain').innerHTML = faceSvg(p.photos[Number(b.dataset.i)]); }));
+    const r = m.$('[data-reunited]');
+    if (r) r.addEventListener('click', async () => {
+      try { await api(`/people/persons/${p.id}/reunited`, { method: 'POST' }); m.close(); toast('Marked as reunited', 'ok'); onChange(); } catch (err) { toast(err.message, 'bad'); }
+    });
+  }
+
+  async function renderReunions(pp) {
+    const [{ reunions: pending }, { reunions: approved }] = await Promise.all([api(`/people/reunions?${q({ status: 'pending' })}`), api(`/people/reunions?${q({ status: 'approved' })}`)]);
+    const all = [...pending, ...approved];
+    if (!all.length) {
+      pp.innerHTML = '<div class="card empty-state fade-in"><div class="big">🤝</div><h3>No reunion requests</h3><p class="muted" style="margin-top:6px">Families request a verified meeting from iSeek after a possible face match.</p></div>';
+      return;
+    }
+    pp.innerHTML = '<div id="list"></div>';
+    const list = pp.querySelector('#list');
+    all.forEach((r) => {
+      const fam = r.report && r.report.photos[0];
+      const card = el(html`<article class="req reunion fade-in">
+        <div class="pic-pair face-pair">${raw(fam ? html`<div>${raw(faceSvg(fam, { crop: true }))}<div class="cap">Family photo</div></div>` : '<div class="muted small">No family photo</div>')}<div class="vs">${r.match_score ? `${Math.round(r.match_score)}%` : 'VS'}</div><div>${raw(r.person ? faceSvg(r.person.photos[0], { crop: true }) : '')}<div class="cap">In care</div></div></div>
+        <div class="mid">
+          <div class="row wrap" style="gap:8px">${raw(statusChip(r.status))}<span class="muted tiny">requested ${ago(r.created_at)}</span></div>
+          <h3 style="margin-top:10px">${r.person ? r.person.display_name : 'Person'}${r.report && r.report.name ? html` <span class="muted small">· reported as “${r.report.name}”</span>` : ''}</h3>
+          <div class="proof"><b>Relation: ${r.relation}</b>${r.proof}</div>
+          <div class="row wrap small" style="margin-top:12px;gap:16px"><span>👤 <b>${r.user_name}</b> <span class="muted">@${r.user_username}</span></span><span>📞 ${r.contact_phone || r.user_phone || '—'}</span><span>✉️ ${r.user_email || '—'}</span></div>
+          <div class="review-note" style="margin-top:12px"><span>🛡️</span><div>Face similarity is a lead, not proof. Verify photo ID and relationship documents before releasing the person.</div></div>
+        </div>
+        <div class="side">
+          <div><div class="muted tiny" style="text-transform:uppercase;letter-spacing:.06em;font-weight:600">Requested meeting</div>
+            <div class="when">${fmtDate(r.scheduled_at)}</div><div class="when" style="color:var(--gold)">${fmtTime(r.scheduled_at)}</div>
+            <div class="muted tiny" style="margin-top:4px">${stationIcon(r.station_type)} ${r.station_name}</div></div>
+          <div class="row" style="margin-top:auto">${raw(r.status === 'pending' ? '<button class="btn ok" style="flex:1" data-act="approve">✔ Approve</button><button class="btn bad" style="flex:1" data-act="reject">✕ Reject</button>' : '<button class="btn ok" style="flex:1" data-act="complete">🫂 Identity verified — reunited</button>')}</div>
+        </div></article>`);
+      card.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', async () => {
+        const act = b.dataset.act;
+        const conf = {
+          approve: { title: 'Approve meeting', message: `${r.user_name} will be invited to meet on ${fmtDateTime(r.scheduled_at)} to verify identity.`, ok: 'Approve', input: { label: 'Note to family (optional)', placeholder: 'e.g. Please bring the birth certificate' } },
+          reject: { title: 'Reject request', message: `Decline ${r.user_name}'s reunion request.`, ok: 'Reject', danger: true, input: { label: 'Reason (shared with family)', placeholder: 'e.g. Relationship could not be established' } },
+          complete: { title: 'Confirm reunion', message: `Confirm you verified ${r.user_name}'s photo ID and relationship, and the person has been reunited.`, ok: 'Confirm reunion' },
+        }[act];
+        const res = await confirmBox(conf);
+        if (!res) return;
+        try {
+          await api(`/people/reunions/${r.id}/${act}`, { body: { note: res.value } });
+          toast({ approve: 'Meeting approved — family notified', reject: 'Request declined — family notified', complete: 'Reunited — family notified' }[act], 'ok');
+          refresh();
+        } catch (err) { toast(err.message, 'bad'); }
+      }));
+      list.appendChild(card);
+    });
+  }
+
+  async function renderMissing(pp) {
+    const { reports } = await api('/people/missing');
+    pp.innerHTML = html`<p class="muted small fade-in" style="margin-bottom:14px">Open missing-person reports filed by families on iSeek. Every person you register is automatically face-matched against these.</p><div class="grid auto" id="mg"></div>`;
+    const grid = pp.querySelector('#mg');
+    if (!reports.length) grid.innerHTML = '<div class="card empty-state" style="grid-column:1/-1"><p class="muted">No open reports.</p></div>';
+    reports.forEach((r) => {
+      grid.appendChild(el(html`<div class="card fade-in stack">
+        ${raw(r.photos.length ? faceSvg(r.photos[0], { crop: true }) : html`<div class="quote">“${r.description}”</div>`)}
+        <div class="row wrap">${raw(statusChip(r.status))}<span class="chip">${r.mode === 'photo' ? '📸 Face' : '💬 Description'}</span></div>
+        <div><b>${r.name || 'Name not given'}</b><div class="muted small">${[r.age ? `${r.age} yrs` : '', r.gender || '', r.last_seen_location ? `last seen ${r.last_seen_location}` : ''].filter(Boolean).join(' · ') || '—'}</div></div>
+        <div class="muted tiny">Reported by ${r.user_name}${r.relation ? ` (${r.relation})` : ''} · 📞 ${r.user_phone || '—'} · ${ago(r.created_at)}</div></div>`));
+    });
   }
 
   api('/me', { allow401: true })
